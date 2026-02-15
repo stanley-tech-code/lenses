@@ -90,7 +90,6 @@ export default function Page(): React.JSX.Element {
         });
         if (res.ok) {
           const data = await res.json();
-          // Merging defaults with basic data
           setConfig((prev) => ({ ...prev, ...data }));
         }
       } catch {
@@ -168,12 +167,10 @@ export default function Page(): React.JSX.Element {
         headers: { 'Content-Type': 'application/json', ...authClient.getAuthHeaders() },
         body: JSON.stringify({
           testPhone,
-          config: {
-            provider: config.smsProvider,
-            apiKey: config.smsApiKey,
-            username: config.smsUsername,
-            senderId: config.smsSenderId,
-          },
+          smsProvider: config.smsProvider,
+          smsApiKey: config.smsApiKey,
+          smsUsername: config.smsUsername,
+          smsSenderId: config.smsSenderId,
           branchName: 'Baus Optical',
         }),
       });

@@ -13,22 +13,56 @@ import { StatCard } from '@/components/dashboard/overview/stat-card';
 import { LatestSMS } from '@/components/dashboard/overview/latest-sms';
 import { Sales } from '@/components/dashboard/overview/sales';
 import { Traffic } from '@/components/dashboard/overview/traffic';
+import { prisma } from '@/lib/prisma';
 
 export const metadata = { title: `Overview | Dashboard | ${config.site.name}` } satisfies Metadata;
 
-export default function Page(): React.JSX.Element {
+export default async function Page(): Promise<React.JSX.Element> {
+  const branchId = process.env.NEXT_PUBLIC_BRANCH_ID || 'default-branch';
+
+  // Fetch real stats
+  const totalSmsSent = await prisma.smsLog.count({
+    where: { branchId, status: 'SENT' },
+  });
+
+  const pendingReminders = await prisma.reminder.count({
+    where: { branchId, status: 'PENDING' },
+  });
+
+  const failedSms = await prisma.smsLog.count({
+    where: { branchId, status: 'FAILED' },
+  });
+
+  // Fetch recent SMS
+  const recentSmsLogs = await prisma.smsLog.findMany({
+    where: { branchId },
+    take: 5,
+    orderBy: { sentAt: 'desc' },
+    include: {
+      customer: true,
+      template: true,
+    },
+  });
+
+  const latestEvents = recentSmsLogs.map((log) => ({
+    id: log.id,
+    customer: { name: log.customer?.name ?? 'Unknown', phone: log.phone },
+    template: log.template?.name ?? 'Direct Message',
+    status: log.status.toLowerCase() as 'pending' | 'delivered' | 'failed',
+    createdAt: dayjs(log.sentAt).toISOString(),
+  }));
+
   return (
     <Grid container spacing={3}>
       <Grid
-        size={{
-          lg: 3,
-          sm: 6,
-          xs: 12,
-        }}
+        item
+        lg={3}
+        sm={6}
+        xs={12}
       >
         <StatCard
           title="Total SMS Sent"
-          value="24.8k"
+          value={totalSmsSent.toLocaleString()}
           diff={12}
           trend="up"
           icon={ChatsCircleIcon}
@@ -37,15 +71,14 @@ export default function Page(): React.JSX.Element {
         />
       </Grid>
       <Grid
-        size={{
-          lg: 3,
-          sm: 6,
-          xs: 12,
-        }}
+        item
+        lg={3}
+        sm={6}
+        xs={12}
       >
         <StatCard
           title="Pending Reminders"
-          value="156"
+          value={pendingReminders.toLocaleString()}
           diff={16}
           trend="up"
           icon={ClockIcon}
@@ -54,15 +87,14 @@ export default function Page(): React.JSX.Element {
         />
       </Grid>
       <Grid
-        size={{
-          lg: 3,
-          sm: 6,
-          xs: 12,
-        }}
+        item
+        lg={3}
+        sm={6}
+        xs={12}
       >
         <StatCard
           title="Failed SMS"
-          value="23"
+          value={failedSms.toLocaleString()}
           diff={5}
           trend="down"
           icon={WarningCircleIcon}
@@ -71,11 +103,10 @@ export default function Page(): React.JSX.Element {
         />
       </Grid>
       <Grid
-        size={{
-          lg: 3,
-          sm: 6,
-          xs: 12,
-        }}
+        item
+        lg={3}
+        sm={6}
+        xs={12}
       >
         <StatCard
           value="98.5%"
@@ -88,10 +119,9 @@ export default function Page(): React.JSX.Element {
         />
       </Grid>
       <Grid
-        size={{
-          lg: 8,
-          xs: 12,
-        }}
+        item
+        lg={8}
+        xs={12}
       >
         <Sales
           chartSeries={[
@@ -102,59 +132,21 @@ export default function Page(): React.JSX.Element {
         />
       </Grid>
       <Grid
-        size={{
-          lg: 4,
-          md: 6,
-          xs: 12,
-        }}
+        item
+        lg={4}
+        md={6}
+        xs={12}
       >
         <Traffic chartSeries={[63, 15, 22]} labels={['Automatic', 'Campaigns', 'Reminders']} sx={{ height: '100%' }} />
       </Grid>
       <Grid
-        size={{
-          lg: 12,
-          md: 12,
-          xs: 12,
-        }}
+        item
+        lg={12}
+        md={12}
+        xs={12}
       >
         <LatestSMS
-          sms={[
-            {
-              id: 'SMS-005',
-              customer: { name: 'Alcides Antonio', phone: '908-691-3242' },
-              template: 'Order Ready',
-              status: 'delivered',
-              createdAt: dayjs().subtract(5, 'minutes').toISOString(),
-            },
-            {
-              id: 'SMS-004',
-              customer: { name: 'Marcus Finn', phone: '415-907-2647' },
-              template: 'Welcome Message',
-              status: 'delivered',
-              createdAt: dayjs().subtract(10, 'minutes').toISOString(),
-            },
-            {
-              id: 'SMS-003',
-              customer: { name: 'Jie Yan', phone: '770-635-2682' },
-              template: '6 Month Reminder',
-              status: 'pending',
-              createdAt: dayjs().subtract(15, 'minutes').toISOString(),
-            },
-            {
-              id: 'SMS-002',
-              customer: { name: 'Nasimiyu Danai', phone: '801-301-7894' },
-              template: 'OTP Code',
-              status: 'delivered',
-              createdAt: dayjs().subtract(20, 'minutes').toISOString(),
-            },
-            {
-              id: 'SMS-001',
-              customer: { name: 'Iulia Albu', phone: '313-812-8947' },
-              template: 'Payment Receipt',
-              status: 'failed',
-              createdAt: dayjs().subtract(25, 'minutes').toISOString(),
-            },
-          ]}
+          sms={latestEvents}
           sx={{ height: '100%' }}
         />
       </Grid>

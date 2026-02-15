@@ -1,97 +1,135 @@
-'use client';
+import { JwtPayload } from './middleware';
 
-import type { User } from '@/types/user';
+const AUTH_STORAGE_KEY = 'auth_token';
 
-function generateToken(): string {
-  const arr = new Uint8Array(12);
-  globalThis.crypto.getRandomValues(arr);
-  return Array.from(arr, (v) => v.toString(16).padStart(2, '0')).join('');
-}
-
-const user = {
-  id: 'USR-000',
-  avatar: '/assets/avatar.png',
-  firstName: 'Sofia',
-  lastName: 'Rivers',
-  email: 'sofia@devias.io',
-} satisfies User;
-
-export interface SignUpParams {
+interface UserProfile {
+  id: string;
+  email: string;
   firstName: string;
   lastName: string;
-  email: string;
-  password: string;
-}
-
-export interface SignInWithOAuthParams {
-  provider: 'google' | 'discord';
-}
-
-export interface SignInWithPasswordParams {
-  email: string;
-  password: string;
-}
-
-export interface ResetPasswordParams {
-  email: string;
+  role: string;
+  branch: {
+    id: string;
+    name: string;
+  };
 }
 
 class AuthClient {
-  async signUp(_: SignUpParams): Promise<{ error?: string }> {
-    // Make API request
+  private token: string | null = null;
+  private user: UserProfile | null = null;
 
-    // We do not handle the API, so we'll just generate a token and store it in localStorage.
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
-
-    return {};
-  }
-
-  async signInWithOAuth(_: SignInWithOAuthParams): Promise<{ error?: string }> {
-    return { error: 'Social authentication not implemented' };
-  }
-
-  async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
-    const { email, password } = params;
-
-    // Make API request
-
-    // We do not handle the API, so we'll check if the credentials match with the hardcoded ones.
-    if (email !== 'sofia@devias.io' || password !== 'Secret1') {
-      return { error: 'Invalid credentials' };
+  constructor() {
+    if (typeof window !== 'undefined') {
+      this.token = localStorage.getItem(AUTH_STORAGE_KEY);
     }
-
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
-
-    return {};
   }
 
-  async resetPassword(_: ResetPasswordParams): Promise<{ error?: string }> {
-    return { error: 'Password reset not implemented' };
+  // Check if user is logged in
+  isAuthenticated(): boolean {
+    return !!this.token;
   }
 
-  async updatePassword(_: ResetPasswordParams): Promise<{ error?: string }> {
-    return { error: 'Update reset not implemented' };
+  // Get the current token
+  getToken(): string | null {
+    return this.token;
   }
 
-  async getUser(): Promise<{ data?: User | null; error?: string }> {
-    // Make API request
+  // Get auth headers for API requests
+  getAuthHeaders(): HeadersInit {
+    return this.token ? { Authorization: `Bearer ${this.token}` } : {};
+  }
 
-    // We do not handle the API, so just check if we have a token in localStorage.
-    const token = localStorage.getItem('custom-auth-token');
+  // Login
+  async signIn(email: string, password: string): Promise<{ error?: string }> {
+    try {
+      const res = await fetch('/api/auth/sign-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!token) {
-      return { data: null };
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { error: data.error || 'Login failed' };
+      }
+
+      this.setSession(data.token, data.user);
+      return {};
+    } catch (err) {
+      return { error: 'Network error' };
     }
-
-    return { data: user };
   }
 
-  async signOut(): Promise<{ error?: string }> {
-    localStorage.removeItem('custom-auth-token');
+  // Register
+  async signUp(payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    branchId: string;
+  }): Promise<{ error?: string }> {
+    try {
+      const res = await fetch('/api/auth/sign-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    return {};
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { error: data.error || 'Registration failed' };
+      }
+
+      this.setSession(data.token, data.user);
+      return {};
+    } catch (err) {
+      return { error: 'Network error' };
+    }
+  }
+
+  // Logout
+  async signOut(): Promise<void> {
+    this.token = null;
+    this.user = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      // Optional: Call API to invalidate cookie if used
+    }
+    window.location.href = '/auth/sign-in';
+  }
+
+  // Get user profile
+  getUser(): UserProfile | null {
+    return this.user;
+  }
+
+  // Initialize session (e.g. on app load)
+  async init(): Promise<void> {
+    if (!this.token) return;
+
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: this.getAuthHeaders(),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        this.user = data.user;
+      } else {
+        // Token invalid/expired
+        this.signOut();
+      }
+    } catch {
+      // Network error, keep token but no user data updated
+    }
+  }
+
+  private setSession(token: string, user: UserProfile) {
+    this.token = token;
+    this.user = user;
+    localStorage.setItem(AUTH_STORAGE_KEY, token);
   }
 }
 

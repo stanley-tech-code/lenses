@@ -12,79 +12,37 @@ import { config } from '@/config';
 import { CustomersFilters } from '@/components/dashboard/customer/customers-filters';
 import { CustomersTable } from '@/components/dashboard/customer/customers-table';
 import type { Customer } from '@/components/dashboard/customer/customers-table';
+import { prisma } from '@/lib/prisma';
 
 export const metadata = { title: `Customers | Dashboard | ${config.site.name}` } satisfies Metadata;
 
-const customers = [
-  {
-    id: 'USR-010',
-    name: 'Alcides Antonio',
-    avatar: '/assets/avatar-10.png',
-    email: 'alcides.antonio@devias.io',
-    phone: '908-691-3242',
-    address: { city: 'Madrid', country: 'Spain', state: 'Comunidad de Madrid', street: '4158 Hedge Street' },
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-    source: 'POS',
-    status: 'active',
-    tags: ['Glasses', 'Repair'],
-    nextReminder: dayjs().add(5, 'days').toDate(),
-  },
-  {
-    id: 'USR-009',
-    name: 'Marcus Finn',
-    avatar: '/assets/avatar-9.png',
-    email: 'marcus.finn@devias.io',
-    phone: '415-907-2647',
-    address: { city: 'Carson City', country: 'USA', state: 'Nevada', street: '2188 Armbrester Drive' },
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-    source: 'CSV',
-    status: 'active',
-    tags: ['Contact Lens'],
-    nextReminder: dayjs().add(1, 'month').toDate(),
-  },
-  {
-    id: 'USR-008',
-    name: 'Jie Yan',
-    avatar: '/assets/avatar-8.png',
-    email: 'jie.yan.song@devias.io',
-    phone: '770-635-2682',
-    address: { city: 'North Canton', country: 'USA', state: 'Ohio', street: '4894 Lakeland Park Drive' },
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-    source: 'POS',
-    status: 'opted-out',
-    tags: ['Eye Exam'],
-  },
-  {
-    id: 'USR-007',
-    name: 'Nasimiyu Danai',
-    avatar: '/assets/avatar-7.png',
-    email: 'nasimiyu.danai@devias.io',
-    phone: '801-301-7894',
-    address: { city: 'Salt Lake City', country: 'USA', state: 'Utah', street: '368 Lamberts Branch Road' },
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-    source: 'POS',
-    status: 'active',
-    tags: ['Glasses'],
-  },
-  {
-    id: 'USR-006',
-    name: 'Iulia Albu',
-    avatar: '/assets/avatar-6.png',
-    email: 'iulia.albu@devias.io',
-    phone: '313-812-8947',
-    address: { city: 'Murray', country: 'USA', state: 'Utah', street: '3934 Wildrose Lane' },
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-    source: 'POS',
-    status: 'active',
-    tags: ['Repair'],
-  },
-] satisfies Customer[];
-
-export default function Page(): React.JSX.Element {
+export default async function Page(): Promise<React.JSX.Element> {
+  const branchId = process.env.NEXT_PUBLIC_BRANCH_ID || 'default-branch';
   const page = 0;
   const rowsPerPage = 5;
 
-  const paginatedCustomers = applyPagination(customers, page, rowsPerPage);
+  const rawCustomers = await prisma.customer.findMany({
+    where: { branchId },
+    orderBy: { createdAt: 'desc' },
+    take: rowsPerPage,
+    skip: page * rowsPerPage,
+  });
+
+  const totalCustomers = await prisma.customer.count({ where: { branchId } });
+
+  const customers: Customer[] = rawCustomers.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    avatar: '',
+    email: c.email ?? '',
+    phone: c.phone,
+    address: { city: '', state: '', country: '', street: '' },
+    createdAt: c.createdAt,
+    source: c.source as Customer['source'],
+    status: c.optedOut ? 'opted-out' : 'active',
+    tags: c.tags,
+    nextReminder: c.nextReminderAt ?? undefined,
+  }));
 
   return (
     <Stack spacing={3}>
@@ -108,15 +66,11 @@ export default function Page(): React.JSX.Element {
       </Stack>
       <CustomersFilters />
       <CustomersTable
-        count={paginatedCustomers.length}
+        count={totalCustomers}
         page={page}
-        rows={paginatedCustomers}
+        rows={customers}
         rowsPerPage={rowsPerPage}
       />
     </Stack>
   );
-}
-
-function applyPagination(rows: Customer[], page: number, rowsPerPage: number): Customer[] {
-  return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 }

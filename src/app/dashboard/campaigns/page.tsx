@@ -1,7 +1,5 @@
-
-'use client';
-
 import * as React from 'react';
+import type { Metadata } from 'next';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -10,38 +8,35 @@ import dayjs from 'dayjs';
 
 import { CampaignsTable } from '@/components/dashboard/campaigns/campaigns-table';
 import type { Campaign } from '@/components/dashboard/campaigns/campaigns-table';
+import { prisma } from '@/lib/prisma';
+import { config } from '@/config';
 
-const campaigns: Campaign[] = [
-  {
-    id: 'CAM-001',
-    name: 'New Year Promo',
-    audienceSize: 1250,
-    sentDate: dayjs().subtract(1, 'month').toDate(),
-    deliveredPercent: 98,
-    failedPercent: 2,
-    status: 'completed',
-  },
-  {
-    id: 'CAM-002',
-    name: 'Eye Exam Reminder',
-    audienceSize: 50,
-    sentDate: dayjs().subtract(1, 'day').toDate(),
-    deliveredPercent: 95,
-    failedPercent: 5,
-    status: 'sent',
-  },
-  {
-    id: 'CAM-003',
-    name: 'Spring Sale',
-    audienceSize: 2000,
-    sentDate: null as unknown as Date,
-    deliveredPercent: 0,
-    failedPercent: 0,
-    status: 'draft',
-  },
-];
+export const metadata = { title: `Campaigns | Dashboard | ${config.site.name}` } satisfies Metadata;
 
-export default function Page(): React.JSX.Element {
+export default async function Page(): Promise<React.JSX.Element> {
+  const branchId = process.env.NEXT_PUBLIC_BRANCH_ID || 'default-branch';
+  const page = 0;
+  const rowsPerPage = 5;
+
+  const rawCampaigns = await prisma.campaign.findMany({
+    where: { branchId },
+    orderBy: { createdAt: 'desc' },
+    take: rowsPerPage,
+    skip: page * rowsPerPage,
+  });
+
+  const totalCampaigns = await prisma.campaign.count({ where: { branchId } });
+
+  const campaigns: Campaign[] = rawCampaigns.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    audienceSize: c.audienceSize,
+    sentDate: c.sentAt || c.scheduledAt || c.createdAt,
+    deliveredPercent: 0, // Placeholder: need aggregationQuery for accurate stats
+    failedPercent: 0, // Placeholder
+    status: c.status.toLowerCase() as Campaign['status'],
+  }));
+
   return (
     <Stack spacing={3}>
       <Stack direction="row" spacing={3}>
@@ -55,10 +50,10 @@ export default function Page(): React.JSX.Element {
         </div>
       </Stack>
       <CampaignsTable
-        count={campaigns.length}
-        page={0}
+        count={totalCampaigns}
+        page={page}
         rows={campaigns}
-        rowsPerPage={5}
+        rowsPerPage={rowsPerPage}
       />
     </Stack>
   );
