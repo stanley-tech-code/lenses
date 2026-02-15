@@ -30,6 +30,10 @@ export interface Customer {
   address: { city: string; state: string; country: string; street: string };
   phone: string;
   createdAt: Date;
+  source: 'POS' | 'CSV';
+  nextReminder?: Date;
+  status: 'active' | 'opted-out';
+  tags: string[];
 }
 
 interface CustomersTableProps {
@@ -74,10 +78,11 @@ export function CustomersTable({
                 />
               </TableCell>
               <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Location</TableCell>
+              <TableCell>Source</TableCell>
               <TableCell>Phone</TableCell>
-              <TableCell>Signed Up</TableCell>
+              <TableCell>Next Reminder</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Tags</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -104,12 +109,19 @@ export function CustomersTable({
                       <Typography variant="subtitle2">{row.name}</Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>{row.email}</TableCell>
-                  <TableCell>
-                    {row.address.city}, {row.address.state}, {row.address.country}
-                  </TableCell>
+                  <TableCell>{row.source}</TableCell>
                   <TableCell>{row.phone}</TableCell>
-                  <TableCell>{dayjs(row.createdAt).format('MMM D, YYYY')}</TableCell>
+                  <TableCell>{row.nextReminder ? dayjs(row.nextReminder).format('MMM D, YYYY') : '-'}</TableCell>
+                  <TableCell>
+                    <Typography color={row.status === 'active' ? 'success.main' : 'error.main'} variant="body2">
+                      {row.status}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    {row.tags.map(tag => (
+                      <Typography key={tag} variant="caption" sx={{ mr: 1, border: 1, px: 1, borderRadius: 1 }}>{tag}</Typography>
+                    ))}
+                  </TableCell>
                 </TableRow>
               );
             })}

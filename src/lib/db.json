@@ -1,0 +1,18 @@
+{
+  "templates": [
+    {
+      "name": "Stanley Maina",
+      "type": "AUTOMATIC",
+      "triggerEvent": "AFTER_VISIT",
+      "message": "",
+      "delayValue": null,
+      "delayUnit": "DAYS",
+      "id": "99451f25-2284-4a9f-82f3-82459be7ad9b",
+      "status": "ACTIVE",
+      "createdAt": "2026-02-15T13:57:24.371Z"
+    }
+  ],
+  "reminders": [],
+  "campaigns": [],
+  "customers": []
+}

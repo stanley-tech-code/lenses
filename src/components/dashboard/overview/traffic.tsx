@@ -25,7 +25,22 @@ export interface TrafficProps {
 }
 
 export function Traffic({ chartSeries, labels, sx }: TrafficProps): React.JSX.Element {
-  const chartOptions = useChartOptions(labels);
+  const theme = useTheme();
+
+  const chartOptions = React.useMemo((): ApexOptions => {
+    return {
+      chart: { background: 'transparent' },
+      colors: [theme.palette.primary.main, theme.palette.success.main, theme.palette.warning.main],
+      dataLabels: { enabled: false },
+      labels,
+      legend: { show: false },
+      plotOptions: { pie: { expandOnClick: false } },
+      states: { active: { filter: { type: 'none' } }, hover: { filter: { type: 'none' } } },
+      stroke: { width: 0 },
+      theme: { mode: theme.palette.mode },
+      tooltip: { fillSeriesColor: false },
+    };
+  }, [theme, labels]);
 
   return (
     <Card sx={sx}>
@@ -53,21 +68,4 @@ export function Traffic({ chartSeries, labels, sx }: TrafficProps): React.JSX.El
       </CardContent>
     </Card>
   );
-}
-
-function useChartOptions(labels: string[]): ApexOptions {
-  const theme = useTheme();
-
-  return {
-    chart: { background: 'transparent' },
-    colors: [theme.palette.primary.main, theme.palette.success.main, theme.palette.warning.main],
-    dataLabels: { enabled: false },
-    labels,
-    legend: { show: false },
-    plotOptions: { pie: { expandOnClick: false } },
-    states: { active: { filter: { type: 'none' } }, hover: { filter: { type: 'none' } } },
-    stroke: { width: 0 },
-    theme: { mode: theme.palette.mode },
-    tooltip: { fillSeriesColor: false },
-  };
 }

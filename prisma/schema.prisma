@@ -1,0 +1,44 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum TemplateType {
+  AUTOMATIC
+  MANUAL
+}
+
+enum TriggerEvent {
+  AFTER_VISIT
+  AFTER_PURCHASE
+  REPAIR_LOGGED
+  REPAIR_COMPLETED
+  ORDER_COLLECTED
+  CUSTOM_TIME_REMINDER
+}
+
+enum DelayUnit {
+  MINUTES
+  HOURS
+  DAYS
+}
+
+model Template {
+  id           String       @id @default(uuid())
+  name         String
+  type         TemplateType @default(AUTOMATIC)
+  triggerEvent TriggerEvent?
+  delayValue   Int?
+  delayUnit    DelayUnit?
+  message      String
+  status       String       @default("ACTIVE") // ACTIVE, PAUSED
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([type])
+}

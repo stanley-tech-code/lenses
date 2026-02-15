@@ -4,6 +4,10 @@ import { paths } from '@/paths';
 export const navItems = [
   { key: 'overview', title: 'Overview', href: paths.dashboard.overview, icon: 'chart-pie' },
   { key: 'customers', title: 'Customers', href: paths.dashboard.customers, icon: 'users' },
+  { key: 'templates', title: 'Templates', href: paths.dashboard.templates, icon: 'file-text' },
+  { key: 'reminders', title: 'Reminders', href: paths.dashboard.reminders, icon: 'clock' },
+  { key: 'campaigns', title: 'Campaigns', href: paths.dashboard.campaigns, icon: 'megaphone' },
+  { key: 'otp', title: 'OTP Verification', href: paths.dashboard.otp, icon: 'shield-check' },
   { key: 'integrations', title: 'Integrations', href: paths.dashboard.integrations, icon: 'plugs-connected' },
   { key: 'settings', title: 'Settings', href: paths.dashboard.settings, icon: 'gear-six' },
   { key: 'account', title: 'Account', href: paths.dashboard.account, icon: 'user' },

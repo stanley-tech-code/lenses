@@ -51,7 +51,9 @@ export function UserProvider({ children }: UserProviderProps): React.JSX.Element
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Expected
   }, []);
 
-  return <UserContext.Provider value={{ ...state, checkSession }}>{children}</UserContext.Provider>;
+  const value = React.useMemo(() => ({ ...state, checkSession }), [state, checkSession]);
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
 export const UserConsumer = UserContext.Consumer;

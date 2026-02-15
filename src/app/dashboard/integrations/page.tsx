@@ -1,73 +1,21 @@
+
+'use client';
+
 import * as React from 'react';
-import type { Metadata } from 'next';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Grid from '@mui/material/Grid';
-import Pagination from '@mui/material/Pagination';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Divider from '@mui/material/Divider';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import OutlinedInput from '@mui/material/OutlinedInput';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { DownloadIcon } from '@phosphor-icons/react/dist/ssr/Download';
-import { PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
-import { UploadIcon } from '@phosphor-icons/react/dist/ssr/Upload';
-import dayjs from 'dayjs';
-
-import { config } from '@/config';
-import { IntegrationCard } from '@/components/dashboard/integrations/integrations-card';
-import type { Integration } from '@/components/dashboard/integrations/integrations-card';
-import { CompaniesFilters } from '@/components/dashboard/integrations/integrations-filters';
-
-export const metadata = { title: `Integrations | Dashboard | ${config.site.name}` } satisfies Metadata;
-
-const integrations = [
-  {
-    id: 'INTEG-006',
-    title: 'Dropbox',
-    description: 'Dropbox is a file hosting service that offers cloud storage, file synchronization, a personal cloud.',
-    logo: '/assets/logo-dropbox.png',
-    installs: 594,
-    updatedAt: dayjs().subtract(12, 'minute').toDate(),
-  },
-  {
-    id: 'INTEG-005',
-    title: 'Medium Corporation',
-    description: 'Medium is an online publishing platform developed by Evan Williams, and launched in August 2012.',
-    logo: '/assets/logo-medium.png',
-    installs: 625,
-    updatedAt: dayjs().subtract(43, 'minute').subtract(1, 'hour').toDate(),
-  },
-  {
-    id: 'INTEG-004',
-    title: 'Slack',
-    description: 'Slack is a cloud-based set of team collaboration tools and services, founded by Stewart Butterfield.',
-    logo: '/assets/logo-slack.png',
-    installs: 857,
-    updatedAt: dayjs().subtract(50, 'minute').subtract(3, 'hour').toDate(),
-  },
-  {
-    id: 'INTEG-003',
-    title: 'Lyft',
-    description: 'Lyft is an on-demand transportation company based in San Francisco, California.',
-    logo: '/assets/logo-lyft.png',
-    installs: 406,
-    updatedAt: dayjs().subtract(7, 'minute').subtract(4, 'hour').subtract(1, 'day').toDate(),
-  },
-  {
-    id: 'INTEG-002',
-    title: 'GitHub',
-    description: 'GitHub is a web-based hosting service for version control of code using Git.',
-    logo: '/assets/logo-github.png',
-    installs: 835,
-    updatedAt: dayjs().subtract(31, 'minute').subtract(4, 'hour').subtract(5, 'day').toDate(),
-  },
-  {
-    id: 'INTEG-001',
-    title: 'Squarespace',
-    description: 'Squarespace provides software as a service for website building and hosting. Headquartered in NYC.',
-    logo: '/assets/logo-squarespace.png',
-    installs: 435,
-    updatedAt: dayjs().subtract(25, 'minute').subtract(6, 'hour').subtract(6, 'day').toDate(),
-  },
-] satisfies Integration[];
+import Grid from '@mui/material/Grid';
+import { PlugsConnected as PlugsConnectedIcon } from '@phosphor-icons/react/dist/ssr/PlugsConnected';
+import { CloudCheck as CloudCheckIcon } from '@phosphor-icons/react/dist/ssr/CloudCheck';
 
 export default function Page(): React.JSX.Element {
   return (
@@ -75,39 +23,73 @@ export default function Page(): React.JSX.Element {
       <Stack direction="row" spacing={3}>
         <Stack spacing={1} sx={{ flex: '1 1 auto' }}>
           <Typography variant="h4">Integrations</Typography>
-          <Stack sx={{ alignItems: 'center' }} direction="row" spacing={1}>
-            <Button color="inherit" startIcon={<UploadIcon fontSize="var(--icon-fontSize-md)" />}>
-              Import
-            </Button>
-            <Button color="inherit" startIcon={<DownloadIcon fontSize="var(--icon-fontSize-md)" />}>
-              Export
-            </Button>
-          </Stack>
         </Stack>
-        <div>
-          <Button startIcon={<PlusIcon fontSize="var(--icon-fontSize-md)" />} variant="contained">
-            Add
-          </Button>
-        </div>
       </Stack>
-      <CompaniesFilters />
+
       <Grid container spacing={3}>
-        {integrations.map((integration) => (
-          <Grid
-            key={integration.id}
-            size={{
-              lg: 4,
-              md: 6,
-              xs: 12,
-            }}
-          >
-            <IntegrationCard integration={integration} />
-          </Grid>
-        ))}
+        <Grid size={{ md: 6, xs: 12 }}>
+          <Card>
+            <CardHeader
+              avatar={<PlugsConnectedIcon fontSize="32px" />}
+              title="BRAUS POS"
+              subheader="Connect your Point of Sale system"
+            />
+            <Divider />
+            <CardContent>
+              <Stack spacing={3}>
+                <FormControl fullWidth>
+                  <InputLabel>API Key</InputLabel>
+                  <OutlinedInput label="API Key" name="brausApiKey" placeholder="Enter BRAUS API Key" />
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel>Webhook URL</InputLabel>
+                  <OutlinedInput
+                    label="Webhook URL"
+                    value="https://api.yourdomain.com/webhooks/braus"
+                    readOnly
+                  />
+                </FormControl>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
+                  <Typography variant="body2" color="text.secondary">Last Event: 2 mins ago</Typography>
+                  <Button variant="contained">Test Connection</Button>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ md: 6, xs: 12 }}>
+          <Card>
+            <CardHeader
+              avatar={<CloudCheckIcon fontSize="32px" />}
+              title="VeriSend SMS"
+              subheader="SMS Gateway Configuration"
+            />
+            <Divider />
+            <CardContent>
+              <Stack spacing={3}>
+                <FormControl fullWidth>
+                  <InputLabel>API Key</InputLabel>
+                  <OutlinedInput label="API Key" name="verisendApiKey" placeholder="Enter VeriSend API Key" />
+                </FormControl>
+                <Stack direction="row" spacing={3} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <Typography variant="subtitle2">Balance</Typography>
+                    <Typography variant="h6">$124.50</Typography>
+                  </div>
+                  <div>
+                    <Typography variant="subtitle2">Delivery Rate</Typography>
+                    <Typography variant="h6" color="success.main">99.8%</Typography>
+                  </div>
+                </Stack>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button variant="contained" color="success">Test SMS</Button>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <Pagination count={3} size="small" />
-      </Box>
     </Stack>
   );
 }

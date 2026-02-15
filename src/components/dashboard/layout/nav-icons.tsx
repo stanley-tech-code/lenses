@@ -6,6 +6,11 @@ import { UserIcon } from '@phosphor-icons/react/dist/ssr/User';
 import { UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
 import { XSquare } from '@phosphor-icons/react/dist/ssr/XSquare';
 
+import { FileTextIcon } from '@phosphor-icons/react/dist/ssr/FileText';
+import { ClockIcon } from '@phosphor-icons/react/dist/ssr/Clock';
+import { MegaphoneIcon } from '@phosphor-icons/react/dist/ssr/Megaphone';
+import { ShieldCheckIcon } from '@phosphor-icons/react/dist/ssr/ShieldCheck';
+
 export const navIcons = {
   'chart-pie': ChartPieIcon,
   'gear-six': GearSixIcon,
@@ -13,4 +18,8 @@ export const navIcons = {
   'x-square': XSquare,
   user: UserIcon,
   users: UsersIcon,
+  'file-text': FileTextIcon,
+  clock: ClockIcon,
+  megaphone: MegaphoneIcon,
+  'shield-check': ShieldCheckIcon,
 } as Record<string, Icon>;
