@@ -1,9 +1,11 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
+
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'secret');
 
 export async function POST(request: NextRequest) {
@@ -15,7 +17,13 @@ export async function POST(request: NextRequest) {
       include: { branch: true },
     });
 
-    if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
+    if (!user || !user.passwordHash) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
+    const isValid = bcrypt.compareSync(password, user.passwordHash);
+
+    if (!isValid) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
@@ -29,7 +37,7 @@ export async function POST(request: NextRequest) {
       .setExpirationTime('24h')
       .sign(JWT_SECRET);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       token,
       user: {
         id: user.id,
@@ -40,7 +48,17 @@ export async function POST(request: NextRequest) {
         branch: user.branch ? { id: user.branch.id, name: user.branch.name } : null,
       },
     });
-  } catch (error) {
+
+    response.cookies.set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 24 hours
+    });
+
+    return response;
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

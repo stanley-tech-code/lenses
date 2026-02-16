@@ -1,3 +1,4 @@
+
 /**
  * POST /api/webhooks/pos
  * 
@@ -14,11 +15,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { verifyWebhookSignature, normalizeWebhookPayload } from '@/lib/pos/integration';
 import { processPosEvent } from '@/lib/queue/automation-engine';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   // ── 1. Get raw body for signature verification ──
@@ -89,8 +90,8 @@ export async function POST(request: NextRequest) {
       .then((result) => {
         console.log(`[Webhook] Event ${normalized.posEventId} processed:`, result);
       })
-      .catch((err) => {
-        console.error(`[Webhook] Failed to process event ${normalized.posEventId}:`, err);
+      .catch((error) => {
+        console.error(`[Webhook] Failed to process event ${normalized.posEventId}:`, error);
       });
 
     results.push({

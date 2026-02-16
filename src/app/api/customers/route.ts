@@ -1,55 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { verifyAuth, unauthorizedResponse } from '@/lib/auth/middleware';
 
-const prisma = new PrismaClient();
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth, unauthorizedResponse } from '@/lib/auth/middleware';
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const auth = await verifyAuth(request);
   if (!auth) return unauthorizedResponse();
 
-  const { searchParams } = request.nextUrl;
-  const page = parseInt(searchParams.get('page') ?? '0');
-  const limit = parseInt(searchParams.get('limit') ?? '50');
-  const query = searchParams.get('query') ?? '';
-
   const branchId = auth.branchId;
-  const where: any = {
-    branchId: branchId || undefined,
-  };
+  const page = Number.parseInt(request.nextUrl.searchParams.get('page') || '0', 10);
+  const limit = Number.parseInt(request.nextUrl.searchParams.get('limit') || '50', 10);
+  const query = request.nextUrl.searchParams.get('query') || '';
 
-  if (query) {
-    where.OR = [
-      { name: { contains: query, mode: 'insensitive' } },
-      { phone: { contains: query, mode: 'insensitive' } },
-      { email: { contains: query, mode: 'insensitive' } },
-    ];
-  }
+  const where = {
+    branchId: branchId || undefined,
+    OR: query
+      ? [
+        { name: { contains: query, mode: 'insensitive' as const } },
+        { phone: { contains: query, mode: 'insensitive' as const } },
+      ]
+      : undefined,
+  };
 
   const [customers, total] = await Promise.all([
     prisma.customer.findMany({
       where,
+      orderBy: { createdAt: 'desc' },
       skip: page * limit,
       take: limit,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: { smsLogs: true, reminders: true },
-        },
-      },
     }),
     prisma.customer.count({ where }),
   ]);
 
-  return NextResponse.json({
-    data: customers,
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
-  });
+  return NextResponse.json({ customers, total });
 }
 
 export async function POST(request: NextRequest) {
@@ -58,24 +43,22 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, phone, email, tags } = body;
+    const branchId = auth.branchId || body.branchId; // Super admin might provide branchId
 
-    const branchId = auth.branchId;
     if (!branchId) return NextResponse.json({ error: 'Branch ID required' }, { status: 400 });
 
     const customer = await prisma.customer.create({
       data: {
         branchId,
-        name,
-        phone,
-        email,
+        name: body.name,
+        phone: body.phone,
+        email: body.email,
         source: 'MANUAL',
-        tags: tags || [],
       },
     });
 
     return NextResponse.json(customer);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+
 /**
  * Automation Engine
  * Baus Optical — Lenses Platform
@@ -11,11 +12,9 @@
  * 5. Logs everything to SmsLog
  */
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import type { NormalizedPosEvent } from '../pos/integration'; // Fixed import path
 import { sendSms, renderTemplate, type SmsConfig } from '../sms/client';
-
-const prisma = new PrismaClient();
 
 // ─────────────────────────────────────────────
 // Process a single POS event end-to-end
@@ -49,7 +48,7 @@ export async function processPosEvent(event: NormalizedPosEvent): Promise<{
         eventType,
         posEventId,
         source: (event.rawPayload._source as 'WEBHOOK' | 'API_POLL') ?? 'WEBHOOK',
-        rawPayload: event.rawPayload,
+        rawPayload: JSON.stringify(event.rawPayload),
         customerPhone,
         customerName,
         orderId: orderId ?? null,
@@ -278,7 +277,7 @@ export async function processDueReminders(): Promise<void> {
 // ─────────────────────────────────────────────
 
 function normalizePhone(phone: string): string {
-  const cleaned = phone.replace(/\s|-/g, '');
+  const cleaned = phone.replaceAll(/\s|-/g, '');
   if (cleaned.startsWith('07') || cleaned.startsWith('01')) {
     return '+254' + cleaned.slice(1);
   }
@@ -291,11 +290,11 @@ function normalizePhone(phone: string): string {
 function addDelay(date: Date, value: number, unit: string): Date {
   const d = new Date(date);
   switch (unit) {
-    case 'MINUTES': d.setMinutes(d.getMinutes() + value); break;
-    case 'HOURS': d.setHours(d.getHours() + value); break;
-    case 'DAYS': d.setDate(d.getDate() + value); break;
-    case 'WEEKS': d.setDate(d.getDate() + value * 7); break;
-    case 'MONTHS': d.setMonth(d.getMonth() + value); break;
+    case 'MINUTES': { d.setMinutes(d.getMinutes() + value); break; }
+    case 'HOURS': { d.setHours(d.getHours() + value); break; }
+    case 'DAYS': { d.setDate(d.getDate() + value); break; }
+    case 'WEEKS': { d.setDate(d.getDate() + value * 7); break; }
+    case 'MONTHS': { d.setMonth(d.getMonth() + value); break; }
   }
   return d;
 }

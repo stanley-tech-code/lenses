@@ -4,7 +4,6 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
-import dayjs from 'dayjs';
 
 import { CampaignsTable } from '@/components/dashboard/campaigns/campaigns-table';
 import type { Campaign } from '@/components/dashboard/campaigns/campaigns-table';
@@ -12,6 +11,7 @@ import { prisma } from '@/lib/prisma';
 import { config } from '@/config';
 
 export const metadata = { title: `Campaigns | Dashboard | ${config.site.name}` } satisfies Metadata;
+export const dynamic = 'force-dynamic';
 
 export default async function Page(): Promise<React.JSX.Element> {
   const branchId = process.env.NEXT_PUBLIC_BRANCH_ID || 'default-branch';
@@ -27,6 +27,7 @@ export default async function Page(): Promise<React.JSX.Element> {
 
   const totalCampaigns = await prisma.campaign.count({ where: { branchId } });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const campaigns: Campaign[] = rawCampaigns.map((c: any) => ({
     id: c.id,
     name: c.name,

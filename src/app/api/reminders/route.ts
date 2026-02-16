@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { verifyAuth, unauthorizedResponse } from '@/lib/auth/middleware';
 
-const prisma = new PrismaClient();
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth, unauthorizedResponse } from '@/lib/auth/middleware';
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const auth = await verifyAuth(request);
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(reminder);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create reminder' }, { status: 500 });
   }
 }

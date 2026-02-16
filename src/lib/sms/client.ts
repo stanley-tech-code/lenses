@@ -55,7 +55,7 @@ async function sendViaAfricasTalking(
         return {
           success: true,
           providerMsgId: recipient.messageId,
-          cost: parseFloat(recipient.cost?.replace('KES ', '') ?? '0'),
+          cost: Number.parseFloat(recipient.cost?.replace('KES ', '') ?? '0'),
         };
       }
       return { success: false, error: recipient.status };
@@ -165,7 +165,7 @@ export function renderTemplate(template: string, variables: TemplateVariables): 
     }
   }
   // Remove any unreplaced variables
-  rendered = rendered.replace(/\{\{[^}]+\}\}/g, '');
+  rendered = rendered.replaceAll(/\{\{[^}]+\}\}/g, '');
   return rendered.trim();
 }
 

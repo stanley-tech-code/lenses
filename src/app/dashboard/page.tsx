@@ -16,6 +16,7 @@ import { Traffic } from '@/components/dashboard/overview/traffic';
 import { prisma } from '@/lib/prisma';
 
 export const metadata = { title: `Overview | Dashboard | ${config.site.name}` } satisfies Metadata;
+export const dynamic = 'force-dynamic';
 
 export default async function Page(): Promise<React.JSX.Element> {
   const branchId = process.env.NEXT_PUBLIC_BRANCH_ID || 'default-branch';
@@ -55,10 +56,11 @@ export default async function Page(): Promise<React.JSX.Element> {
   return (
     <Grid container spacing={3}>
       <Grid
-        item
-        lg={3}
-        sm={6}
-        xs={12}
+        size={{
+          lg: 3,
+          sm: 6,
+          xs: 12
+        }}
       >
         <StatCard
           title="Total SMS Sent"
@@ -71,10 +73,11 @@ export default async function Page(): Promise<React.JSX.Element> {
         />
       </Grid>
       <Grid
-        item
-        lg={3}
-        sm={6}
-        xs={12}
+        size={{
+          lg: 3,
+          sm: 6,
+          xs: 12
+        }}
       >
         <StatCard
           title="Pending Reminders"
@@ -87,10 +90,11 @@ export default async function Page(): Promise<React.JSX.Element> {
         />
       </Grid>
       <Grid
-        item
-        lg={3}
-        sm={6}
-        xs={12}
+        size={{
+          lg: 3,
+          sm: 6,
+          xs: 12
+        }}
       >
         <StatCard
           title="Failed SMS"
@@ -103,10 +107,11 @@ export default async function Page(): Promise<React.JSX.Element> {
         />
       </Grid>
       <Grid
-        item
-        lg={3}
-        sm={6}
-        xs={12}
+        size={{
+          lg: 3,
+          sm: 6,
+          xs: 12
+        }}
       >
         <StatCard
           value="98.5%"
@@ -119,9 +124,10 @@ export default async function Page(): Promise<React.JSX.Element> {
         />
       </Grid>
       <Grid
-        item
-        lg={8}
-        xs={12}
+        size={{
+          lg: 8,
+          xs: 12
+        }}
       >
         <Sales
           chartSeries={[
@@ -132,18 +138,20 @@ export default async function Page(): Promise<React.JSX.Element> {
         />
       </Grid>
       <Grid
-        item
-        lg={4}
-        md={6}
-        xs={12}
+        size={{
+          lg: 4,
+          md: 6,
+          xs: 12
+        }}
       >
         <Traffic chartSeries={[63, 15, 22]} labels={['Automatic', 'Campaigns', 'Reminders']} sx={{ height: '100%' }} />
       </Grid>
       <Grid
-        item
-        lg={12}
-        md={12}
-        xs={12}
+        size={{
+          lg: 12,
+          md: 12,
+          xs: 12
+        }}
       >
         <LatestSMS
           sms={latestEvents}

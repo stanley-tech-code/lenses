@@ -301,7 +301,7 @@ export default function Page(): React.JSX.Element {
                   <InputLabel>Webhook URL (give this to Baus POS)</InputLabel>
                   <OutlinedInput
                     label="Webhook URL (give this to Baus POS)"
-                    value={config.webhookUrl ?? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/pos`}
+                    value={config.webhookUrl ?? `${globalThis.window === undefined ? '' : globalThis.window.location.origin}/api/webhooks/pos`}
                     readOnly
                     endAdornment={
                       <InputAdornment position="end">
@@ -383,7 +383,7 @@ export default function Page(): React.JSX.Element {
                     label="SMS Provider"
                     onChange={(e) => handleChange('smsProvider', e.target.value)}
                   >
-                    <MenuItem value="AFRICAS_TALKING">Africa's Talking</MenuItem>
+                    <MenuItem value="AFRICAS_TALKING">Africa&apos;s Talking</MenuItem>
                     <MenuItem value="TWILIO">Twilio</MenuItem>
                     <MenuItem value="VERISEND">VeriSend</MenuItem>
                     <MenuItem value="CUSTOM">Custom / Other</MenuItem>

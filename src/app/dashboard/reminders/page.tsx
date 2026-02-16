@@ -2,7 +2,6 @@ import * as React from 'react';
 import type { Metadata } from 'next';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import dayjs from 'dayjs';
 
 import { RemindersTable } from '@/components/dashboard/reminders/reminders-table';
 import type { Reminder } from '@/components/dashboard/reminders/reminders-table';
@@ -10,6 +9,7 @@ import { prisma } from '@/lib/prisma';
 import { config } from '@/config';
 
 export const metadata = { title: `Reminders | Dashboard | ${config.site.name}` } satisfies Metadata;
+export const dynamic = 'force-dynamic';
 
 export default async function Page(): Promise<React.JSX.Element> {
   const branchId = process.env.NEXT_PUBLIC_BRANCH_ID || 'default-branch';

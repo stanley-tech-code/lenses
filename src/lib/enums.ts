@@ -1,0 +1,81 @@
+export enum UserRole {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  BRANCH_ADMIN = 'BRANCH_ADMIN',
+  STAFF = 'STAFF',
+}
+
+export enum SmsProvider {
+  AFRICAS_TALKING = 'AFRICAS_TALKING',
+  TWILIO = 'TWILIO',
+  VERISEND = 'VERISEND',
+  CUSTOM = 'CUSTOM',
+}
+
+export enum CustomerSource {
+  POS = 'POS',
+  CSV = 'CSV',
+  MANUAL = 'MANUAL',
+}
+
+export enum TemplateType {
+  AUTOMATIC = 'AUTOMATIC',
+  MANUAL = 'MANUAL',
+}
+
+export enum TemplateCategory {
+  GENERAL = 'GENERAL',
+  REMINDER = 'REMINDER',
+  CAMPAIGN = 'CAMPAIGN',
+  OTP = 'OTP',
+  FOLLOWUP = 'FOLLOWUP',
+}
+
+export enum TriggerEvent {
+  AFTER_VISIT = 'AFTER_VISIT',
+  AFTER_PURCHASE = 'AFTER_PURCHASE',
+  REPAIR_LOGGED = 'REPAIR_LOGGED',
+  REPAIR_COMPLETED = 'REPAIR_COMPLETED',
+  ORDER_COLLECTED = 'ORDER_COLLECTED',
+  CUSTOM_TIME_REMINDER = 'CUSTOM_TIME_REMINDER',
+  FOLLOWUP_NEEDED = 'FOLLOWUP_NEEDED',
+  SEASONAL_CHECKUP = 'SEASONAL_CHECKUP',
+  EYE_EXAM_DUE = 'EYE_EXAM_DUE',
+}
+
+export enum DelayUnit {
+  MINUTES = 'MINUTES',
+  HOURS = 'HOURS',
+  DAYS = 'DAYS',
+  WEEKS = 'WEEKS',
+  MONTHS = 'MONTHS',
+}
+
+export enum EventSource {
+  WEBHOOK = 'WEBHOOK',
+  API_POLL = 'API_POLL',
+}
+
+export enum ReminderStatus {
+  PENDING = 'PENDING',
+  SENT = 'SENT',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+  SKIPPED = 'SKIPPED',
+}
+
+export enum CampaignStatus {
+  DRAFT = 'DRAFT',
+  SCHEDULED = 'SCHEDULED',
+  SENDING = 'SENDING',
+  SENT = 'SENT',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+}
+
+export enum SmsStatus {
+  PENDING = 'PENDING',
+  SENT = 'SENT',
+  DELIVERED = 'DELIVERED',
+  FAILED = 'FAILED',
+  OPTED_OUT = 'OPTED_OUT',
+}

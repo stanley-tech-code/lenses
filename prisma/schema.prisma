@@ -7,7 +7,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 // ─────────────────────────────────────────────
@@ -20,7 +21,7 @@ model User {
   passwordHash String
   firstName    String
   lastName     String
-  role         UserRole @default(STAFF)
+  role         String   @default("STAFF") // Enum: UserRole
   branchId     String?
   branch       Branch?  @relation(fields: [branchId], references: [id])
   createdAt    DateTime @default(now())
@@ -30,11 +31,7 @@ model User {
   @@index([branchId])
 }
 
-enum UserRole {
-  SUPER_ADMIN  // Full access across all branches
-  BRANCH_ADMIN // Full access for their branch only
-  STAFF        // Read-only + send manual SMS
-}
+// Enum UserRole removed
 
 // ─────────────────────────────────────────────
 // BRANCHES (Multi-location support)
@@ -78,7 +75,7 @@ model PosConfig {
   webhookEnabled  Boolean  @default(true)
 
   // SMS Provider config (per branch so different branches can use different providers)
-  smsProvider     SmsProvider @default(AFRICAS_TALKING)
+  smsProvider     String   @default("AFRICAS_TALKING") // Enum: SmsProvider
   smsApiKey       String?
   smsSenderId     String?     // e.g. "BausOptical"
   smsUsername     String?     // Africa's Talking username
@@ -95,12 +92,7 @@ model PosConfig {
   updatedAt               DateTime @updatedAt
 }
 
-enum SmsProvider {
-  AFRICAS_TALKING
-  TWILIO
-  VERISEND
-  CUSTOM
-}
+// Enum SmsProvider removed
 
 // ─────────────────────────────────────────────
 // CUSTOMERS
@@ -116,14 +108,14 @@ model Customer {
   name            String
   phone           String
   email           String?
-  source          CustomerSource @default(MANUAL)
+  source          String @default("MANUAL") // Enum: CustomerSource
 
   // Opt-out management
   optedOut        Boolean   @default(false)
   optedOutAt      DateTime?
 
   // Tags (e.g. Glasses, Contact Lens, Eye Exam, Repair)
-  tags            String[]
+  tags            String    @default("")
 
   // Reminder tracking
   lastVisitAt     DateTime?
@@ -143,11 +135,7 @@ model Customer {
   @@index([nextReminderAt])
 }
 
-enum CustomerSource {
-  POS       // Synced from POS system
-  CSV       // Bulk imported
-  MANUAL    // Added manually in dashboard
-}
+// Enum CustomerSource removed
 
 // ─────────────────────────────────────────────
 // SMS TEMPLATES
@@ -156,11 +144,11 @@ enum CustomerSource {
 model Template {
   id           String        @id @default(uuid())
   name         String
-  type         TemplateType  @default(AUTOMATIC)
-  category     TemplateCategory @default(GENERAL)
-  triggerEvent TriggerEvent?
+  type         String  @default("AUTOMATIC") // Enum: TemplateType
+  category     String @default("GENERAL")   // Enum: TemplateCategory
+  triggerEvent String?       // Enum: TriggerEvent
   delayValue   Int?
-  delayUnit    DelayUnit?
+  delayUnit    String?       // Enum: DelayUnit
   message      String        // Supports {{customer_name}}, {{order_id}}, {{branch_name}}, {{appointment_date}}, {{doctor_name}}
   status       String        @default("ACTIVE") // ACTIVE, PAUSED
   createdAt    DateTime      @default(now())
@@ -175,38 +163,13 @@ model Template {
   @@index([triggerEvent])
 }
 
-enum TemplateType {
-  AUTOMATIC  // Triggered by POS events
-  MANUAL     // Used in manual campaigns or reminders
-}
+// Enum TemplateType removed
 
-enum TemplateCategory {
-  GENERAL
-  REMINDER
-  CAMPAIGN
-  OTP
-  FOLLOWUP
-}
+// Enum TemplateCategory removed
 
-enum TriggerEvent {
-  AFTER_VISIT
-  AFTER_PURCHASE
-  REPAIR_LOGGED
-  REPAIR_COMPLETED
-  ORDER_COLLECTED
-  CUSTOM_TIME_REMINDER
-  FOLLOWUP_NEEDED
-  SEASONAL_CHECKUP
-  EYE_EXAM_DUE
-}
+// Enum TriggerEvent removed
 
-enum DelayUnit {
-  MINUTES
-  HOURS
-  DAYS
-  WEEKS
-  MONTHS
-}
+// Enum DelayUnit removed
 
 // ─────────────────────────────────────────────
 // POS EVENTS (raw event log from POS)
@@ -215,12 +178,12 @@ enum DelayUnit {
 model PosEvent {
   id            String        @id @default(uuid())
   branchId      String
-  source        EventSource   @default(WEBHOOK)
+  source        String   @default("WEBHOOK") // Enum: EventSource
 
   // Raw event data from POS
   eventType     String        // Maps to TriggerEvent
   posEventId    String?       // POS system's own event ID (for deduplication)
-  rawPayload    Json          // Full raw payload stored for debugging/replay
+  rawPayload    String        // Full raw payload stored for debugging/replay
 
   // Extracted fields
   customerPhone String?
@@ -242,10 +205,7 @@ model PosEvent {
   @@index([eventType])
 }
 
-enum EventSource {
-  WEBHOOK   // POS pushed event to us
-  API_POLL  // We pulled event from POS API
-}
+// Enum EventSource removed
 
 // ─────────────────────────────────────────────
 // REMINDERS (scheduled individual SMS)
@@ -264,7 +224,7 @@ model Reminder {
   relatedEvent String?        // e.g. "Purchase (Glasses)", "Eye Exam"
   scheduledAt  DateTime
   sentAt       DateTime?
-  status       ReminderStatus @default(PENDING)
+  status       String @default("PENDING") // Enum: ReminderStatus
   error        String?
 
   createdAt    DateTime       @default(now())
@@ -276,13 +236,7 @@ model Reminder {
   @@index([status])
 }
 
-enum ReminderStatus {
-  PENDING
-  SENT
-  FAILED
-  CANCELLED
-  SKIPPED    // Customer opted out
-}
+// Enum ReminderStatus removed
 
 // ─────────────────────────────────────────────
 // CAMPAIGNS (bulk SMS to a group)
@@ -296,11 +250,11 @@ model Campaign {
   template        Template        @relation(fields: [templateId], references: [id])
 
   name            String
-  audienceFilter  Json?           // e.g. { tags: ["Glasses"], lastVisitBefore: "2024-01-01" }
+  audienceFilter  String?         // e.g. { tags: ["Glasses"], lastVisitBefore: "2024-01-01" }
   audienceSize    Int             @default(0)
   scheduledAt     DateTime?
   sentAt          DateTime?
-  status          CampaignStatus  @default(DRAFT)
+  status          String  @default("DRAFT") // Enum: CampaignStatus
 
   // Stats
   totalSent       Int             @default(0)
@@ -316,14 +270,7 @@ model Campaign {
   @@index([status])
 }
 
-enum CampaignStatus {
-  DRAFT
-  SCHEDULED
-  SENDING
-  SENT
-  COMPLETED
-  FAILED
-}
+// Enum CampaignStatus removed
 
 // ─────────────────────────────────────────────
 // SMS LOG (every message sent)
@@ -342,10 +289,10 @@ model SmsLog {
 
   phone        String
   message      String      // Final rendered message (variables replaced)
-  provider     SmsProvider
+  provider     String      // Enum: SmsProvider
   providerMsgId String?    // Message ID from SMS provider (for delivery tracking)
 
-  status       SmsStatus   @default(PENDING)
+  status       String   @default("PENDING") // Enum: SmsStatus
   statusUpdatedAt DateTime?
   errorMessage String?
   retryCount   Int         @default(0)
@@ -359,10 +306,4 @@ model SmsLog {
   @@index([providerMsgId])
 }
 
-enum SmsStatus {
-  PENDING
-  SENT
-  DELIVERED
-  FAILED
-  OPTED_OUT
-}
+// Enum SmsStatus removed

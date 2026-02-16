@@ -6,7 +6,6 @@ import Typography from '@mui/material/Typography';
 import { DownloadIcon } from '@phosphor-icons/react/dist/ssr/Download';
 import { PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
 import { UploadIcon } from '@phosphor-icons/react/dist/ssr/Upload';
-import dayjs from 'dayjs';
 
 import { config } from '@/config';
 import { CustomersFilters } from '@/components/dashboard/customer/customers-filters';
@@ -15,6 +14,7 @@ import type { Customer } from '@/components/dashboard/customer/customers-table';
 import { prisma } from '@/lib/prisma';
 
 export const metadata = { title: `Customers | Dashboard | ${config.site.name}` } satisfies Metadata;
+export const dynamic = 'force-dynamic';
 
 export default async function Page(): Promise<React.JSX.Element> {
   const branchId = process.env.NEXT_PUBLIC_BRANCH_ID || 'default-branch';
@@ -30,6 +30,7 @@ export default async function Page(): Promise<React.JSX.Element> {
 
   const totalCustomers = await prisma.customer.count({ where: { branchId } });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const customers: Customer[] = rawCustomers.map((c: any) => ({
     id: c.id,
     name: c.name,
@@ -40,7 +41,7 @@ export default async function Page(): Promise<React.JSX.Element> {
     createdAt: c.createdAt,
     source: c.source as Customer['source'],
     status: c.optedOut ? 'opted-out' : 'active',
-    tags: c.tags,
+    tags: c.tags ? c.tags.split(',').filter(Boolean) : [],
     nextReminder: c.nextReminderAt ?? undefined,
   }));
 

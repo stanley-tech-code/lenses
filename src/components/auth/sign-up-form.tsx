@@ -52,7 +52,8 @@ export function SignUpForm(): React.JSX.Element {
     async (values: Values): Promise<void> => {
       setIsPending(true);
 
-      const { error } = await authClient.signUp(values);
+      const branchId = process.env.NEXT_PUBLIC_BRANCH_ID || 'default-branch';
+      const { error } = await authClient.signUp({ ...values, branchId });
 
       if (error) {
         setError('root', { type: 'server', message: error });

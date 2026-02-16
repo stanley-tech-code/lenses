@@ -1,7 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+
+import { NextResponse } from 'next/server';
 import { processDueReminders } from '@/lib/queue/automation-engine';
 
-export async function GET(request: NextRequest) {
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
   // In production, verify a secret token to prevent abuse
   // const authHeader = request.headers.get('authorization');
   // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

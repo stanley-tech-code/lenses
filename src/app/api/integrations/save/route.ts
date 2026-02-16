@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { verifyAuth, unauthorizedResponse } from '@/lib/auth/middleware';
 
-const prisma = new PrismaClient();
+import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'node:crypto';
+import { verifyAuth, unauthorizedResponse } from '@/lib/auth/middleware';
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 // GET: Fetch config for a branch
 export async function GET(request: NextRequest) {
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
   if (!auth) return unauthorizedResponse();
 
   const body = await request.json();
-  const { branchId, ...data } = body;
+  const { branchId } = body;
 
   if (!branchId) return NextResponse.json({ error: 'Branch ID required' }, { status: 400 });
 
@@ -34,14 +36,47 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const config = await prisma.posConfig.upsert({
-    where: { branchId },
-    update: data,
-    create: {
-      branchId,
-      ...data,
-    },
-  });
+  try {
+    const config = await prisma.posConfig.upsert({
+      where: { branchId },
+      update: {
+        posApiKey: body.posApiKey,
+        posApiBaseUrl: body.posApiBaseUrl,
+        webhookEnabled: body.webhookEnabled,
+        smsProvider: body.smsProvider,
+        smsApiKey: body.smsApiKey,
+        smsUsername: body.smsUsername,
+        smsSenderId: body.smsSenderId,
+        automationEnabled: body.automationEnabled,
+        retryFailedSms: body.retryFailedSms,
+        defaultDelayMinutes: Number.parseInt(body.defaultDelayMinutes, 10),
+        optOutKeyword: body.optOutKeyword,
+      },
+      create: {
+        branchId,
+        posApiKey: body.posApiKey,
+        posApiBaseUrl: body.posApiBaseUrl,
+        webhookEnabled: body.webhookEnabled,
+        webhookSecret: crypto.randomBytes(32).toString('hex'), // Generate secret on first save
+        smsProvider: body.smsProvider,
+        smsApiKey: body.smsApiKey,
+        smsUsername: body.smsUsername,
+        smsSenderId: body.smsSenderId,
+        automationEnabled: body.automationEnabled,
+        retryFailedSms: body.retryFailedSms,
+        defaultDelayMinutes: Number.parseInt(body.defaultDelayMinutes, 10),
+        optOutKeyword: body.optOutKeyword,
+      },
+    });
 
-  return NextResponse.json(config);
+    const webhookUrl = `${request.nextUrl.origin}/api/webhooks/pos`;
+
+    return NextResponse.json({
+      success: true,
+      webhookSecret: config.webhookSecret,
+      webhookUrl,
+    });
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

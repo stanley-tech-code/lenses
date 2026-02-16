@@ -1,4 +1,3 @@
-import { JwtPayload } from './middleware';
 
 const AUTH_STORAGE_KEY = 'auth_token';
 
@@ -12,6 +11,7 @@ interface UserProfile {
     id: string;
     name: string;
   };
+  [key: string]: unknown;
 }
 
 class AuthClient {
@@ -19,7 +19,7 @@ class AuthClient {
   private user: UserProfile | null = null;
 
   constructor() {
-    if (typeof window !== 'undefined') {
+    if (globalThis.window !== undefined) {
       this.token = localStorage.getItem(AUTH_STORAGE_KEY);
     }
   }
@@ -56,9 +56,13 @@ class AuthClient {
 
       this.setSession(data.token, data.user);
       return {};
-    } catch (err) {
+    } catch {
       return { error: 'Network error' };
     }
+  }
+
+  async signInWithPassword(params: { email: string; password: string }): Promise<{ error?: string }> {
+    return this.signIn(params.email, params.password);
   }
 
   // Register
@@ -84,25 +88,38 @@ class AuthClient {
 
       this.setSession(data.token, data.user);
       return {};
-    } catch (err) {
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  // Reset Password (stub)
+  async resetPassword(payload: { email: string }): Promise<{ error?: string }> {
+    try {
+      // TODO: Implement API endpoint
+      // const res = await fetch('/api/auth/reset-password', ...);
+      console.log('Reset password for:', payload.email);
+      return {};
+    } catch {
       return { error: 'Network error' };
     }
   }
 
   // Logout
-  async signOut(): Promise<void> {
+  async signOut(): Promise<{ error?: string }> {
     this.token = null;
     this.user = null;
-    if (typeof window !== 'undefined') {
+    if (globalThis.window !== undefined) {
       localStorage.removeItem(AUTH_STORAGE_KEY);
       // Optional: Call API to invalidate cookie if used
     }
-    window.location.href = '/auth/sign-in';
+    globalThis.window.location.href = '/auth/sign-in';
+    return {};
   }
 
   // Get user profile
-  getUser(): UserProfile | null {
-    return this.user;
+  async getUser(): Promise<{ data: UserProfile | null; error?: string }> {
+    return { data: this.user };
   }
 
   // Initialize session (e.g. on app load)
