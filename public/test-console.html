@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lenses Test Console</title>
+    <style>
+        body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #000; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        button:hover { background: #333; }
+        pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; }
+        .status { margin-top: 1rem; padding: 1rem; border-radius: 4px; display: none; }
+        .success { background: #d1fae5; color: #065f46; display: block; }
+        .error { background: #fee2e2; color: #991b1b; display: block; }
+    </style>
+</head>
+<body>
+    <h1>Lenses Testing Console</h1>
+    
+    <div class="card">
+        <h2>Configuration</h2>
+        <div class="grid">
+            <div>
+                <label>Base URL</label>
+                <input type="text" id="baseUrl" value="http://localhost:3004">
+            </div>
+            <div>
+                <label>Branch ID</label>
+                <input type="text" id="branchId" placeholder="e.g. default-branch-id">
+            </div>
+            <div>
+                <label>Webhook Secret</label>
+                <input type="text" id="webhookSecret" placeholder="whsec_...">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Simulate POS Event</h2>
+        <div class="grid">
+            <div>
+                <label>Event Type</label>
+                <select id="eventType">
+                    <option value="AFTER_PURCHASE">After Purchase</option>
+                    <option value="AFTER_VISIT">After Visit</option>
+                    <option value="ORDER_COLLECTED">Order Collected</option>
+                    <option value="REPAIR_LOGGED">Repair Logged</option>
+                </select>
+            </div>
+            <div>
+                <label>Customer Phone</label>
+                <input type="tel" id="phone" value="+254700000000">
+            </div>
+        </div>
+        <div style="margin-top: 1rem;">
+            <button onclick="sendEvent()">Fire Webhook</button>
+        </div>
+        <div id="status" class="status"></div>
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        async function sendEvent() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const branchId = document.getElementById('branchId').value;
+            const secret = document.getElementById('webhookSecret').value;
+            const eventType = document.getElementById('eventType').value;
+            const phone = document.getElementById('phone').value;
+            
+            const statusEl = document.getElementById('status');
+            const outputEl = document.getElementById('output');
+
+            statusEl.className = 'status';
+            outputEl.textContent = 'Sending...';
+
+            const payload = {
+                event_type: eventType,
+                event_id: `test_${Date.now()}`,
+                created_at: new Date().toISOString(),
+                customer: {
+                    phone: phone,
+                    first_name: "Test",
+                    last_name: "User"
+                },
+                sale_id: "SALE_123",
+                amount: 1500
+            };
+
+            const payloadStr = JSON.stringify(payload);
+
+            // Generate HMAC (Web Crypto API)
+            const enc = new TextEncoder();
+            const key = await crypto.subtle.importKey(
+                "raw", enc.encode(secret),
+                { name: "HMAC", hash: "SHA-256" },
+                false, ["sign"]
+            );
+            const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(payloadStr));
+            const signature = 'sha256=' + Array.from(new Uint8Array(sigBuf))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+
+            try {
+                const res = await fetch(`${baseUrl}/api/webhooks/pos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Branch-ID': branchId,
+                        'X-Webhook-Signature': signature
+                    },
+                    body: payloadStr
+                });
+
+                const data = await res.json();
+                outputEl.textContent = JSON.stringify(data, null, 2);
+                
+                if (res.ok) {
+                    statusEl.textContent = `Success: ${res.status}`;
+                    statusEl.classList.add('success');
+                } else {
+                    statusEl.textContent = `Error: ${res.status}`;
+                    statusEl.classList.add('error');
+                }
+
+            } catch (e) {
+                outputEl.textContent = e.message;
+                statusEl.textContent = 'Network Error';
+                statusEl.classList.add('error');
+            }
+        }
+    </script>
+</body>
+</html>

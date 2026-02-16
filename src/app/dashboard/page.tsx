@@ -21,29 +21,27 @@ export const dynamic = 'force-dynamic';
 export default async function Page(): Promise<React.JSX.Element> {
   const branchId = process.env.NEXT_PUBLIC_BRANCH_ID || 'default-branch';
 
-  // Fetch real stats
-  const totalSmsSent = await prisma.smsLog.count({
-    where: { branchId, status: 'SENT' },
-  });
-
-  const pendingReminders = await prisma.reminder.count({
-    where: { branchId, status: 'PENDING' },
-  });
-
-  const failedSms = await prisma.smsLog.count({
-    where: { branchId, status: 'FAILED' },
-  });
-
-  // Fetch recent SMS
-  const recentSmsLogs = await prisma.smsLog.findMany({
-    where: { branchId },
-    take: 5,
-    orderBy: { sentAt: 'desc' },
-    include: {
-      customer: true,
-      template: true,
-    },
-  });
+  // Fetch real stats in parallel to reduce load time
+  const [totalSmsSent, pendingReminders, failedSms, recentSmsLogs] = await Promise.all([
+    prisma.smsLog.count({
+      where: { branchId, status: 'SENT' },
+    }),
+    prisma.reminder.count({
+      where: { branchId, status: 'PENDING' },
+    }),
+    prisma.smsLog.count({
+      where: { branchId, status: 'FAILED' },
+    }),
+    prisma.smsLog.findMany({
+      where: { branchId },
+      take: 5,
+      orderBy: { sentAt: 'desc' },
+      include: {
+        customer: true,
+        template: true,
+      },
+    }),
+  ]);
 
   const latestEvents = recentSmsLogs.map((log) => ({
     id: log.id,

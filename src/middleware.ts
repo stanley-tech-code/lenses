@@ -8,6 +8,7 @@ export async function middleware(request: NextRequest) {
   // Exclude auth routes, static files, and public assets
   if (
     request.nextUrl.pathname.startsWith('/api/auth') ||
+    request.nextUrl.pathname.startsWith('/api/webhooks/pos') ||
     request.nextUrl.pathname.startsWith('/_next') ||
     request.nextUrl.pathname.startsWith('/static') ||
     request.nextUrl.pathname.startsWith('/favicon.ico') ||

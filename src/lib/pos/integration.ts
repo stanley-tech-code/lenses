@@ -86,11 +86,14 @@ export function verifyWebhookSignature(
       ? signature.slice(7)
       : signature;
 
+    console.log(`[Debug] Sig Verify: Expected=${expected}, Incoming=${incoming}, Secret=${secret.slice(0, 5)}...`);
+
     return crypto.timingSafeEqual(
       Buffer.from(expected, 'hex'),
       Buffer.from(incoming, 'hex')
     );
-  } catch {
+  } catch (error) {
+    console.error('[Debug] Sig Verify Error:', error);
     return false;
   }
 }
